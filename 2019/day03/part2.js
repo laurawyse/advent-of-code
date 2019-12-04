@@ -19,7 +19,6 @@ const addPoint = (pointObj, x, y, steps) => {
 }
 
 const buildPointObj = (moves) => {
-    // todo = keep step count here
     const wire_points = {};
     let current_x = 0;
     let current_y = 0;
@@ -95,12 +94,7 @@ Object.keys(wire_1_points).forEach(x => {
     }
 });
 
-// find the crossover point with the shortest manhattah distance from (0,0)
-const ZERO = {
-    x: 0,
-    y: 0
-};
-const manhattanDist = (pt1, pt2) => Math.abs(pt1.x - pt2.x) + Math.abs(pt1.y - pt2.y);
+// find the crossover point with the least number of total steps
 
 // this could be better...
 let closest_point_by_steps;
