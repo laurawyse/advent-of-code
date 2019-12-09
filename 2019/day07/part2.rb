@@ -2,12 +2,12 @@
 file = File.open("input.txt").readlines[0]
 fileInput = file.split(',').map { |num| num.to_i }
 
-# part 1 input
+# part 2 input
 input1 = 0
 
 # test data
 fileInput = [3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5]
-
+# fileInput = [3,52,1001,52,-5,52,3,53,1,52,56,54,1007,54,5,55,1005,55,26,1001,54,-5,54,1105,1,12,1,53,54,53,1008,54,0,55,1001,55,1,55,2,53,55,53,4,53,1001,56,-1,56,1005,56,6,99,0,0,0,0,10]
 
 def getValue(numbers, num, mode)
     if mode == 0
@@ -42,12 +42,8 @@ def getModes(entireInstruction)
 end
 
 
-def runAmplifier(numbers, input, phaseSetting)
-    output = nil
-    i = 0
-    halt = false
-    firstInput = true;
-    while i < numbers.length && !halt
+def runAmplifier(numbers, input, i, firstInput, phaseSetting)
+    while i < numbers.length
         entireInstruction = numbers[i]
         current = getOpcode(entireInstruction)
         modes = getModes(entireInstruction)
@@ -70,12 +66,13 @@ def runAmplifier(numbers, input, phaseSetting)
             outputIndex = numbers[i+1]
 
             numbers[outputIndex] = firstInput ? phaseSetting : input
-            firstInput = false
+            firstInput = false 
             i += 2
         elsif current.to_i == 4
-            outputIndex = numbers[i+1]
             output = getValue(numbers, numbers[i+1], modes[0]) 
+            # puts "returning with output #{output}"
             i += 2
+            return [output, numbers, i]
         elsif current.to_i == 5
             if getValue(numbers, numbers[i+1], modes[0]) != 0
                 i = getValue(numbers, numbers[i+2], modes[1])
@@ -104,43 +101,59 @@ def runAmplifier(numbers, input, phaseSetting)
             i += 4
         elsif current.to_i == 99
             puts "99! we\'re all done here"
-            halt = true
-            i += 4
+            return nil
         else
             puts "uh oh, we shouldn't be here"
             raise Exception.new 'unexpected opcode'
         end
     end
 
-    if !halt
-        puts "all done but no halt"
-        # we hit the end of the input without halting, maybe keep going? or keep going from the output part?
-    end
-
-    return [output, halt]
+    puts "hit the end"
+    return nil
 end
 
-def runAll5(fileInput, input1, phaseSettings)
-    puts 'running the loop'
-    output1 = runAmplifier(fileInput.dup, input1, phaseSettings[0])[0]
-    output2 = runAmplifier(fileInput.dup, output1, phaseSettings[1])[0]
-    output3 = runAmplifier(fileInput.dup, output2, phaseSettings[2])[0]
-    output4 = runAmplifier(fileInput.dup, output3, phaseSettings[3])[0]
-    return runAmplifier(fileInput.dup, output4, phaseSettings[4])
-end
+# def runAll5(input, phaseSettings)
+#     puts 'running the loop'
+#     output = input
+#     (0..4).to_a.each do |count|
+#         output = runAmplifier(output[1], output[0], output[2], phaseSettings[count])
+#         break if output == nil
+#     end
+#     return output
+
+#     output1 = runAmplifier(input[1], input[0], input[2], phaseSettings[0])
+#     output2 = runAmplifier(output[1], output[0], input[2], phaseSettings[1])
+#     output3 = runAmplifier(output[1], output[0], input[2], phaseSettings[2])
+#     output4 = runAmplifier(output[1], output[0], input[2], phaseSettings[3])
+#     output5 = runAmplifier(output[1], output[0], input[2], phaseSettings[4])
+
+#     return output5
+# end
 
 def runOnRepeat(fileInput, input1, phaseSettings)
-    input = input1
+    final_output = nil
+    max_output = nil
+    output5 = [input1, fileInput, 0]
+    continue = true
+    first = true
+    while continue do 
+        puts "run them"
+        #runAmplifier(numbers, input, i, firstInput, phaseSetting)
+        #runAmplifier returns: [output, numbers, i]
+        # todo - need to get input from the previous one and numbers and index from the last run of the same amp
+        output1 = runAmplifier(first ? fileInput : output1[1], first ? input1 : output5[0], first ? 0 : output1[2], first, phaseSettings[0])
+        output2 = runAmplifier(first ? fileInput : output2[1], output1[0], first ? 0 : output2[2], first, phaseSettings[1])
+        output3 = runAmplifier(first ? fileInput : output3[1], output2[0], first ? 0 : output3[2], first, phaseSettings[2])
+        output4 = runAmplifier(first ? fileInput : output4[1], output3[0], first ? 0 : output4[2], first, phaseSettings[3])
+        output5 = runAmplifier(first ? fileInput : output5[1], output4[0], first ? 0 : output5[2], first, phaseSettings[4])
 
-    output = input1
-    halt = false
-    while !halt do 
-        # idk if this is even close to right
-        r = runAll5(fileInput, output, phaseSettings)
-        output = r[0]
-        halt = r[1]
+
+        first = false
+        continue = false if output5 == nil
+        final_output = output5 if output5 != nil
+        max_output = final_output if max_output.nil? || final_output[0] > max_output[0]
     end
-    return output
+    return max_output
 end
 
 # max2 = 0
@@ -155,8 +168,8 @@ end
 #     end
 # end
 
-puts "PART 2"
-puts "this does not work yet"
 # puts "max output: #{max2}"
 # puts "max phase setting combo: #{maxPhaseSettings2.to_s}"
-puts "test: #{runOnRepeat(fileInput, input1, [9,8,7,6,5])}"
+# puts "test: #{runOnRepeat(fileInput, input1, [9,8,7,6,5])}"
+puts "last output (test): #{runOnRepeat(fileInput, input1, [9,8,7,6,5])[0]}"
+#puts "test: #{runOnRepeat(fileInput, input1, [9,7,8,5,6])}"
