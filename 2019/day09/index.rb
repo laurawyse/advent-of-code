@@ -3,20 +3,37 @@ numbers = file.split(',').map(&:to_i)
 
 # test data
 # numbers = [104,1125899906842624,99]
-input = 1
 
-def get_value(numbers, num, mode, base)
-  if mode.zero?
-    # position mode (original method)
-    numbers[num] || 0
-  elsif mode == 1
-    # immediate mode
-    num
-  elsif mode == 2
-    # relative mode
-    numbers[num + base] || 0
+# PART 1 input
+# input = 1
+# PART 2 input
+input = 2
+
+POSITION_MODE = 0
+IMMEDIATE_MODE = 1
+RELATIVE_MODE = 2
+
+def get_value(numbers, index, mode, base)
+  case mode
+  when POSITION_MODE
+    numbers[index] || 0
+  when IMMEDIATE_MODE
+    index
+  when RELATIVE_MODE
+    numbers[index + base] || 0
   else
-    puts 'INVALID MODE'
+    raise 'INVALID MODE'
+  end
+end
+
+def get_write_index(mode:, index:, base:, numbers:)
+  case mode
+  when RELATIVE_MODE
+    numbers[index] + base
+  when POSITION_MODE
+    numbers[index]
+  else
+    raise 'INVALID MODE'
   end
 end
 
@@ -40,12 +57,11 @@ def get_modes(entire_instruction)
 end
 
 def change_number(numbers, new_value, index)
-  puts 'INVALID INDEX' if index.negative?
+  raise 'INVALID INDEX' if index.negative?
   if index >= numbers.length
     (numbers.length..index).to_a.each { numbers.push(0) }
   end
   numbers[index] = new_value
-  numbers
 end
 
 i = 0
@@ -58,18 +74,20 @@ while i < numbers.length && !halt
 
   param1 = get_value(numbers, numbers[i + 1], modes[0], base)
   param2 = get_value(numbers, numbers[i + 2], modes[1], base)
-  param3 = get_value(numbers, numbers[i + 3], modes[2], base)
+  param3 = get_write_index(mode: modes[2], index: i+3, base: base, numbers: numbers)
 
   case current
   when 1
-    numbers = change_number(numbers, param1 + param2, param3)
+    change_number(numbers, param1 + param2, param3)
     i += 4
   when 2
     # seems like there is something wrong here...
-    numbers = change_number(numbers, param1 * param2, param3)
+    change_number(numbers, param1 * param2, param3)
     i += 4
   when 3
-    numbers = change_number(numbers, input, param1)
+    # for 3, param1 is a write param so we need to get it using that function
+    three_index = get_write_index(mode: modes[0], index: i+1, base: base, numbers: numbers)
+    change_number(numbers, input, three_index)
     i += 2
   when 4
     output = param1
@@ -89,16 +107,16 @@ while i < numbers.length && !halt
     end
   when 7
     if param1 < param2
-      numbers = change_number(numbers, 1, param3)
+      change_number(numbers, 1, param3)
     else
-      numbers = change_number(numbers, 0, param3)
+      change_number(numbers, 0, param3)
     end
     i += 4
   when 8
     if param1 == param2
-      numbers = change_number(numbers, 1, param3)
+      change_number(numbers, 1, param3)
     else
-      numbers = change_number(numbers, 0, param3)
+      change_number(numbers, 0, param3)
     end
     i += 4
   when 9
@@ -109,7 +127,7 @@ while i < numbers.length && !halt
     halt = true
     i += 4
   else
-    puts 'INVALID OPCODE'
+    raise 'INVALID OPCODE'
   end
 end
 
