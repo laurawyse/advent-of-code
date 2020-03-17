@@ -9,6 +9,11 @@ Moon = Struct.new(:name, :position, :velocity) do
   def kinetic_energy
     velocity[:x].abs() + velocity[:y].abs() + velocity[:z].abs()
   end
+
+  def to_s
+    # Name:pos=<x=-1,y=0,z=2>,vel=<x=0,y=0,z=0>
+    "#{name}:pos=<x=#{position[:x]},y=#{position[:y]},z=#{position[:z]}>,vel=<x=#{velocity[:x]},y=#{velocity[:y]},z=#{velocity[:z]}>"
+  end
 end
 Coord = Struct.new(:x, :y, :z)
 Change = Struct.new(:moon_name, :dimension, :change)
@@ -81,15 +86,24 @@ def apply_velocity(moon)
   Moon.new(moon[:name], Coord.new(new_x_pos, new_y_pos, new_z_pos), Coord.new(moon[:velocity][:x], moon[:velocity][:y], moon[:velocity][:z]))
 end
 
+# strinifies a list of moons to the format:
+# "Name:pos=<x=-1,y=0,z=2>,vel=<x=0,y=0,z=0>,
+def stringify_moon_list(moons)
+  moons.map { |moon| moon.to_s }.to_s
+  # moons.to_s
+end
 
 # ==== do it to it ====
 
 # simulate in time steps
 
 time_step = 1
+history = {} # {moons_string: true}
+
 # puts 'before:'
 # puts moons
-while time_step <= 1000
+while true
+  puts "time step: #{time_step}"
   # update velocity by applying gravity (to all moons)
   # - find changes to be applied based on each pair of moons
   changes = []
@@ -117,15 +131,19 @@ while time_step <= 1000
   # update position by applying velocity (to all moons)
   moons = moons.map { |moon| apply_velocity(moon) }
 
-  # puts "time #{time_step}"
-  # puts moons
-  # not sure if I need this but :shrug:
+  # see if this moon positions/velocities combination has happened before
+  if (!history[stringify_moon_list(moons)].nil?)
+    puts 'found a match!'
+    break
+  end
+
+  # puts stringify_moon_list(moons)
+  # add this list of moon positions/velocities to the list
+  history[stringify_moon_list(moons)] = true
   time_step = time_step + 1
 end
 
-# calculate energy
-energy = moons.reduce(0) do |sum, moon |
-  sum + (moon.kinetic_energy * moon.potential_energy)
-end
+puts "Part 2 solution: #{time_step-1}"
+puts "Part 2 expected: 4686774924"
 
-puts energy
+# 4686774924
