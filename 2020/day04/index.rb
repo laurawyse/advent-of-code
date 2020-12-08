@@ -87,7 +87,6 @@ end
 
 def validate_hair_color (color)
   return /\A[#][0-9|a-f]{6}$/.match?(color)
-
 end
 
 def validate_eye_color (color)
